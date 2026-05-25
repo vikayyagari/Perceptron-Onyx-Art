@@ -114,7 +114,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-Admin portal at `http://localhost:3001`
+Admin portal at `http://localhost:3002`
 
 Login with any of the seeded staff credentials above.
 

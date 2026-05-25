@@ -30,20 +30,28 @@ export default function LoginPage() {
   } = useForm<LoginForm>({ resolver: zodResolver(loginSchema) })
 
   async function onSubmit(values: LoginForm) {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(values),
-    })
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(values),
+      })
 
-    if (!res.ok) {
-      const err = await res.json()
-      toast.error(err.message ?? 'Login failed')
-      return
+      if (!res.ok) {
+        let message = 'Login failed'
+        try {
+          const err = await res.json()
+          message = err.message ?? err.error ?? message
+        } catch (_) { /* ignore parse error */ }
+        toast.error(message)
+        return
+      }
+
+      router.push('/')
+      router.refresh()
+    } catch (err) {
+      toast.error('Cannot reach the server — is the backend running?')
     }
-
-    router.push('/')
-    router.refresh()
   }
 
   return (
