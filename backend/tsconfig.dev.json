@@ -1,11 +1,12 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
+    "outDir": "./dist",
     "baseUrl": ".",
     "paths": {
       "@perceptron/shared": ["../shared/src"]
-    },
-    "noEmit": true
+    }
   },
-  "include": ["prisma/seed.ts", "scripts"]
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }

@@ -4,10 +4,10 @@
   "private": true,
   "main": "./dist/index.js",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "build": "tsc",
+    "dev": "ts-node-dev --respawn --transpile-only --project tsconfig.dev.json src/index.ts",
+    "build": "tsc --build",
     "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --project tsconfig.dev.json --noEmit",
     "test": "jest",
     "test:unit": "SKIP_DB_SETUP=true jest --testPathPattern=unit",
     "test:integration": "jest --testPathPattern=integration",
@@ -15,10 +15,10 @@
     "db:migrate": "prisma migrate deploy",
     "db:migrate:dev": "prisma migrate dev",
     "db:generate": "prisma generate",
-    "db:seed": "ts-node --transpile-only prisma/seed.ts",
+    "db:seed": "ts-node --project tsconfig.dev.json --transpile-only prisma/seed.ts",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset --force",
-    "keys:generate": "ts-node --transpile-only scripts/generate-keys.ts"
+    "keys:generate": "ts-node --project tsconfig.dev.json --transpile-only scripts/generate-keys.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.600.0",

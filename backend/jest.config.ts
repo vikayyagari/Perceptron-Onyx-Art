@@ -4,6 +4,11 @@ const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/src/__tests__'],
+  globals: {
+    'ts-jest': {
+      tsconfig: '<rootDir>/tsconfig.dev.json',
+    },
+  },
   moduleNameMapper: {
     '@perceptron/shared': '<rootDir>/../shared/src',
   },

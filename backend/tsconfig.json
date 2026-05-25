@@ -1,12 +1,10 @@
 {
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "./dist",
-    "baseUrl": ".",
-    "paths": {
-      "@perceptron/shared": ["../shared/src"]
-    }
+    "rootDir": "./src",
+    "outDir": "./dist"
   },
+  "references": [{ "path": "../shared" }],
   "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }
