@@ -1,0 +1,11 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@perceptron/shared": ["../shared/src"]
+    },
+    "noEmit": true
+  },
+  "include": ["prisma/seed.ts", "scripts"]
+}

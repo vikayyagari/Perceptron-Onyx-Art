@@ -1,0 +1,244 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector", schema: "public")]
+}
+
+// ─── Galleries ───────────────────────────────────────────────────────────────
+
+model Gallery {
+  id                String   @id @default(uuid())
+  name              String
+  address           String
+  city              String
+  country           String
+  timezone          String   @default("UTC")
+  contactEmail      String
+  contactPhone      String?
+  brandPrimaryColor String?
+  brandLogo         String?  // S3 key
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  paintings  Painting[]
+  users      User[]         @relation("firstGallery")
+  staff      GalleryStaff[]
+  inquiries  Inquiry[]
+  scanEvents ScanEvent[]
+
+  @@map("galleries")
+}
+
+// ─── Artists ─────────────────────────────────────────────────────────────────
+
+model Artist {
+  id            String   @id @default(uuid())
+  name          String
+  slug          String   @unique
+  bio           String   @db.Text
+  birthYear     Int?
+  deathYear     Int?
+  nationality   String?
+  portraitImage String?  // S3 key
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  paintings Painting[]
+
+  @@map("artists")
+}
+
+// ─── Paintings ────────────────────────────────────────────────────────────────
+
+model Painting {
+  id           String         @id @default(uuid())
+  galleryId    String
+  artistId     String
+  title        String
+  year         Int?
+  medium       String?
+  widthCm      Decimal        @db.Decimal(8, 2)
+  heightCm     Decimal        @db.Decimal(8, 2)
+  depthCm      Decimal?       @db.Decimal(8, 2)
+  price        Decimal?       @db.Decimal(12, 2)
+  currency     String         @default("USD")
+  description  String         @db.Text
+  provenance   String?        @db.Text
+  primaryImage String         // S3 key
+  // imageEmbedding stored as raw SQL vector(512) — managed via Prisma migrations
+  // and queried using $queryRaw with the <-> operator
+  dominantColor String?       // hex string e.g. "#A3B4C5"
+  status       PaintingStatus @default(AVAILABLE)
+  qrCodeId     String         @unique @default(uuid())
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  gallery          Gallery          @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  artist           Artist           @relation(fields: [artistId], references: [id])
+  savedBy          SavedPainting[]
+  inquiries        Inquiry[]
+  scanEvents       ScanEvent[]
+  visualEvents     VisualizationEvent[]
+
+  @@index([galleryId])
+  @@index([artistId])
+  @@index([status])
+  @@index([qrCodeId])
+  @@map("paintings")
+}
+
+enum PaintingStatus {
+  AVAILABLE
+  SOLD
+  ON_LOAN
+  IN_STORAGE
+  ARCHIVED
+}
+
+// ─── Users (gallery customers) ───────────────────────────────────────────────
+
+model User {
+  id              String       @id @default(uuid())
+  email           String?      @unique
+  authProvider    AuthProvider
+  providerUserId  String?
+  phoneNumber     String?      @unique
+  displayName     String?
+  firstGalleryId  String?
+  createdAt       DateTime     @default(now())
+  lastActiveAt    DateTime     @default(now())
+
+  firstGallery       Gallery?             @relation("firstGallery", fields: [firstGalleryId], references: [id])
+  savedPaintings     SavedPainting[]
+  inquiries          Inquiry[]
+  scanEvents         ScanEvent[]
+  visualizationEvents VisualizationEvent[]
+
+  @@index([authProvider, providerUserId])
+  @@map("users")
+}
+
+enum AuthProvider {
+  APPLE
+  GOOGLE
+  GUEST
+  PHONE
+}
+
+// ─── Saved Paintings ─────────────────────────────────────────────────────────
+
+model SavedPainting {
+  userId     String
+  paintingId String
+  savedAt    DateTime @default(now())
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  painting Painting @relation(fields: [paintingId], references: [id], onDelete: Cascade)
+
+  @@id([userId, paintingId])
+  @@map("saved_paintings")
+}
+
+// ─── Inquiries ────────────────────────────────────────────────────────────────
+
+model Inquiry {
+  id           String        @id @default(uuid())
+  userId       String?
+  paintingId   String
+  galleryId    String
+  message      String        @db.Text
+  contactEmail String
+  contactPhone String?
+  status       InquiryStatus @default(NEW)
+  createdAt    DateTime      @default(now())
+
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  painting Painting @relation(fields: [paintingId], references: [id])
+  gallery  Gallery  @relation(fields: [galleryId], references: [id])
+
+  @@index([galleryId])
+  @@index([status])
+  @@map("inquiries")
+}
+
+enum InquiryStatus {
+  NEW
+  CONTACTED
+  CLOSED
+}
+
+// ─── Gallery Staff (admin users) ─────────────────────────────────────────────
+
+model GalleryStaff {
+  id           String           @id @default(uuid())
+  email        String           @unique
+  passwordHash String
+  role         GalleryStaffRole
+  galleryId    String?          // null = SUPER_ADMIN access to all
+  createdAt    DateTime         @default(now())
+  lastLoginAt  DateTime?
+
+  gallery Gallery? @relation(fields: [galleryId], references: [id])
+
+  @@index([galleryId])
+  @@map("gallery_staff")
+}
+
+enum GalleryStaffRole {
+  SUPER_ADMIN
+  GALLERY_ADMIN
+  GALLERY_STAFF
+}
+
+// ─── Scan Events (analytics) ──────────────────────────────────────────────────
+
+model ScanEvent {
+  id        String     @id @default(uuid())
+  userId    String?
+  paintingId String
+  galleryId String
+  method    ScanMethod
+  createdAt DateTime   @default(now())
+
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  painting Painting @relation(fields: [paintingId], references: [id])
+  gallery  Gallery  @relation(fields: [galleryId], references: [id])
+
+  @@index([paintingId])
+  @@index([galleryId])
+  @@index([createdAt])
+  @@map("scan_events")
+}
+
+enum ScanMethod {
+  QR
+  COMPUTER_VISION
+}
+
+// ─── Visualization Events (analytics) ────────────────────────────────────────
+
+model VisualizationEvent {
+  id         String            @id @default(uuid())
+  userId     String
+  paintingId String
+  mode       VisualizationMode
+  frameStyle String?
+  createdAt  DateTime          @default(now())
+
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  painting Painting @relation(fields: [paintingId], references: [id])
+
+  @@index([paintingId])
+  @@index([userId])
+  @@map("visualization_events")
+}
+
+enum VisualizationMode {
+  AR
+  PHOTO_UPLOAD
+}

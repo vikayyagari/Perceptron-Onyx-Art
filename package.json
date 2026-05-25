@@ -1,0 +1,27 @@
+{
+  "name": "perceptron-gallery",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Perceptron Gallery — premium art gallery mobile platform",
+  "scripts": {
+    "dev": "pnpm --filter @perceptron/backend dev",
+    "build": "pnpm -r build",
+    "lint": "eslint . --ext .ts,.tsx --ignore-path .gitignore",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore",
+    "format:check": "prettier --check \"**/*.{ts,tsx,json,md}\" --ignore-path .gitignore",
+    "test": "pnpm --filter @perceptron/backend test",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.13.0",
+    "@typescript-eslint/parser": "^7.13.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.3.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}
