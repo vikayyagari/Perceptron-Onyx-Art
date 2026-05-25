@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 20% 98%;
+    --foreground: 20 14% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 20 14% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 20 14% 10%;
+    --primary: 35 92% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 40 20% 94%;
+    --secondary-foreground: 20 14% 10%;
+    --muted: 40 15% 94%;
+    --muted-foreground: 20 10% 46%;
+    --accent: 35 92% 50%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 35 92% 50%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 20 14% 8%;
+    --foreground: 40 20% 95%;
+    --card: 20 14% 11%;
+    --card-foreground: 40 20% 95%;
+    --popover: 20 14% 11%;
+    --popover-foreground: 40 20% 95%;
+    --primary: 35 85% 52%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 20 14% 16%;
+    --secondary-foreground: 40 20% 95%;
+    --muted: 20 14% 16%;
+    --muted-foreground: 40 10% 55%;
+    --accent: 35 85% 52%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 20 14% 20%;
+    --input: 20 14% 20%;
+    --ring: 35 85% 52%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: 'rlig' 1, 'calt' 1;
+  }
+}
+
+/* Tiptap editor styles */
+.tiptap-editor {
+  @apply min-h-[200px] rounded-md border border-input bg-transparent px-3 py-2 text-sm ring-offset-background focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2;
+}
+
+.tiptap-editor .ProseMirror {
+  @apply outline-none min-h-[180px];
+}
+
+.tiptap-editor .ProseMirror p {
+  @apply mb-3;
+}
+
+.tiptap-editor .ProseMirror h1,
+.tiptap-editor .ProseMirror h2,
+.tiptap-editor .ProseMirror h3 {
+  @apply font-serif font-semibold mb-2 mt-4;
+}
+
+.tiptap-editor .ProseMirror h1 { @apply text-2xl; }
+.tiptap-editor .ProseMirror h2 { @apply text-xl; }
+.tiptap-editor .ProseMirror h3 { @apply text-lg; }
+
+.tiptap-editor .ProseMirror ul,
+.tiptap-editor .ProseMirror ol {
+  @apply pl-6 mb-3;
+}
+
+.tiptap-editor .ProseMirror ul { @apply list-disc; }
+.tiptap-editor .ProseMirror ol { @apply list-decimal; }
+
+.tiptap-editor .ProseMirror blockquote {
+  @apply border-l-4 border-primary pl-4 italic my-3;
+}
+
+.tiptap-editor .ProseMirror strong { @apply font-semibold; }
+.tiptap-editor .ProseMirror em { @apply italic; }
+.tiptap-editor .ProseMirror a { @apply text-primary underline; }
+
+.tiptap-editor .ProseMirror p.is-editor-empty:first-child::before {
+  @apply text-muted-foreground pointer-events-none float-left h-0;
+  content: attr(data-placeholder);
+}
+
+/* Shimmer skeleton */
+.skeleton {
+  @apply bg-gradient-to-r from-muted via-muted/50 to-muted bg-[length:200%_100%] animate-shimmer rounded;
+}

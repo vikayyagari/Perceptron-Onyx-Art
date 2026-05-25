@@ -201,12 +201,112 @@ Priority order:
 
 ---
 
-## What's Next — Phase 2
+---
 
-1. Run `pnpm build` in `admin/` directory placeholder → scaffold Next.js 14 App Router
-2. Install `@perceptron/shared` in admin — all types already defined
-3. Admin portal will call the admin API endpoints above
-4. Key admin screens: dashboard, painting list/edit, QR download, inquiry management, staff management
+## Phase 2 — Admin Portal
+
+**Completed:** 2026-05-25  
+**Scope:** Next.js 14 App Router admin portal for gallery management
+
+---
+
+### Stack
+
+- **Next.js 14.2.5** App Router with TypeScript strict, `moduleResolution: bundler`
+- **Tailwind CSS 3** + `tailwindcss-animate` + custom amber/stone design tokens
+- **shadcn/ui** components (manually inlined to avoid CLI dependency)
+- **TanStack Query v5** with a `QueryProvider` wrapper, 30s stale time, smart retry (no retry on 401/403/404)
+- **react-hook-form + zod** for all forms
+- **Tiptap** (StarterKit + Link + Placeholder) for rich-text description/provenance editors
+- **recharts** for dashboard charts (BarChart + PieChart)
+- **sonner** toasts (top-right, rich colors)
+- **next-themes** for dark/light mode toggle
+- **jose** for Edge-compatible RS256 JWT verification in middleware
+
+---
+
+### Authentication
+
+- **HTTP-only cookies** — access token in `perceptron_admin_token` (1h), refresh in `perceptron_admin_refresh` (30d, scoped to `/api/auth`)
+- `POST /api/auth/login` — proxies to backend `/v1/admin/auth/login`, sets both cookies
+- `POST /api/auth/logout` — clears both cookies
+- `POST /api/auth/refresh` — rotates tokens via backend; on failure clears cookies
+- **Middleware** (`src/middleware.ts`) — verifies RS256 JWT on every non-public route. SUPER_ADMIN paths gated by role. Sets `x-admin-id`, `x-admin-role`, `x-admin-gallery-id` headers for downstream use.
+- `getAdminSession()` — server-component helper that reads cookie and verifies JWT via `jose.importSPKI` + `jwtVerify`
+
+---
+
+### API Proxy
+
+`/api/proxy/[...path]/route.ts` — wildcard handler that:
+1. Reads `perceptron_admin_token` cookie and forwards as `Authorization: Bearer`
+2. Passes through all methods (GET/POST/PUT/PATCH/DELETE)
+3. Handles both JSON and multipart/form-data transparently
+4. Returns 502 if backend is unreachable
+
+All client-side `api.*` calls go to `/api/proxy/v1/...` — the proxy adds the auth header server-side, so the token never touches client JavaScript.
+
+---
+
+### Screen Inventory
+
+| Route | Component | Notes |
+|---|---|---|
+| `/login` | `LoginPage` | Email/password form, shows/hides password |
+| `/` | `DashboardPage` + `DashboardClient` | Stats cards + recharts analytics |
+| `/paintings` | `PaintingsPage` + `PaintingsTable` | Paginated list, search, status filter, QR download, delete |
+| `/paintings/new` | `NewPaintingPage` + `PaintingWizard` | 3-step wizard: details → dimensions/pricing → description/image |
+| `/paintings/[id]` | `PaintingDetailPage` + `PaintingDetailClient` | Tabbed detail editor (details, description, provenance) |
+| `/artists` | `ArtistsPage` + `ArtistsClient` | Card grid, create/edit/delete via dialog |
+| `/inquiries` | `InquiriesPage` + `InquiriesClient` | Inbox list, click to open detail dialog, status transitions |
+| `/staff` | `StaffPage` + `StaffClient` | Table, create staff dialog, delete (SUPER_ADMIN only) |
+| `/galleries` | `GalleriesPage` + `GalleriesClient` | Card grid (SUPER_ADMIN only), create/edit galleries |
+| `/photography` | `PhotographyPage` + `PhotographyClient` | Tablet camera helper: select painting → capture → preview → upload |
+
+---
+
+### Design Decisions
+
+- **Fonts**: Fraunces (variable, serif) for headings and brand marks; Inter for UI text. Loaded via `next/font/google`.
+- **Color system**: CSS custom properties in `globals.css` with separate light/dark sets. Primary = deep amber (HSL 35 92% 50%). Background = warm off-white (HSL 40 20% 98%) in light, dark charcoal in dark.
+- **Gallery-scoped views**: All client components receive `galleryId` from server components via session. GALLERY_ADMIN/GALLERY_STAFF users see only their gallery's data; SUPER_ADMIN sees everything.
+- **Sidebar**: Fixed left-side navigation with active state indicator. Logout button at bottom calls `/api/auth/logout` then redirects to `/login`.
+- **`typedRoutes`**: Disabled in final next.config.mjs (not supported in 14.2.5 without the experimental beta).
+
+---
+
+### QR Placard Download
+
+- Client calls `GET /api/proxy/v1/admin/paintings/:id/qr` (no JSON, returns `application/pdf`)
+- Response is streamed as a blob, then triggered as a file download with filename `placard-{id}.pdf`
+- PDF generation is handled entirely by the backend (pdfkit + qrcode) — no frontend PDF library needed
+
+---
+
+### Photography Helper
+
+Tablet-optimized full-screen camera UI:
+1. **Select**: search paintings by title, pick one
+2. **Camera**: access device camera (`facingMode: environment`), can flip, tap shutter to capture to canvas
+3. **Preview**: shows captured image full-screen, confirm or retake
+4. On confirm: uploads as multipart form to `/v1/admin/paintings/:id/images` via proxy
+
+---
+
+## What's Next — Phase 3+
+
+### Remaining Stubs (to complete in later phases)
+
+| Stub | Phase |
+|---|---|
+| Apple Sign In (`apple-signin-auth`) | 3 — when iOS app is ready |
+| Google Sign In (`google-auth-library`) | 3/4 — when mobile apps are ready |
+| Twilio SMS OTP | Can be wired up any time with credentials |
+| Image embedding generation (`POST /admin/paintings/:id/image`) | 6 — CV pipeline |
+| pgvector similarity search | 6 — CV pipeline |
+| Push notifications | 5+ |
+| iOS app | Phase 3 |
+| Android app | Phase 4 |
 
 ## Remaining Stubs (to complete in later phases)
 

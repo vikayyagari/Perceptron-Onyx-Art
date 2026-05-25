@@ -19,7 +19,7 @@ Three gallery locations, one owner. Customers scan paintings via QR or computer 
 
 ---
 
-## Quick Start (Phase 1 — Backend)
+## Quick Start
 
 ### Prerequisites
 
@@ -101,6 +101,22 @@ cd backend && pnpm dev
 ```
 
 API available at `http://localhost:3000`
+
+### 7. Start the admin portal
+
+In a separate terminal:
+
+```bash
+cd admin
+cp .env.example .env
+# Set JWT_PUBLIC_KEY to the same public key from step 3
+# Set BACKEND_URL=http://localhost:3000
+pnpm dev
+```
+
+Admin portal at `http://localhost:3001`
+
+Login with any of the seeded staff credentials above.
 
 ---
 
@@ -212,14 +228,20 @@ Backed by Redis. Auth endpoints: 10 req/min per IP. All other endpoints: 100 req
 # Type-check all packages
 pnpm typecheck
 
-# Run all tests
-pnpm test
+# Admin portal typecheck
+cd admin && pnpm typecheck
 
-# Run unit tests only
+# Run all backend tests
+cd backend && pnpm test
+
+# Run unit tests only (no Docker needed)
 cd backend && pnpm test:unit
 
 # Run integration tests (requires Docker infra)
 cd backend && pnpm test:integration
+
+# Admin portal build
+cd admin && pnpm build
 
 # Prisma Studio (database GUI)
 cd backend && pnpm db:studio
@@ -234,8 +256,8 @@ open http://localhost:9001   # minioadmin / minioadmin
 
 | Phase | Scope |
 |---|---|
-| **1 (current)** | Backend API + shared types |
-| **2** | Next.js 14 admin portal |
+| **1** | Backend API + shared types |
+| **2 (current)** | Next.js 14 admin portal |
 | **3** | iOS app (Swift/SwiftUI) |
 | **4** | Android app (Kotlin/Compose) |
 | **5** | AR visualization (RealityKit / ARCore) |
